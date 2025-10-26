@@ -1,6 +1,5 @@
 import streamlit as st
 from fpdf import FPDF
-import os
 import traceback
 
 # --- PAGE CONFIG ---
@@ -58,87 +57,41 @@ with st.expander("Additional Comments / Photos"):
     comments = st.text_area("Comments")
     photos = st.file_uploader("Upload Car Photos", accept_multiple_files=True, type=["png", "jpg", "jpeg"])
 
-
 # --- PDF GENERATION FUNCTION ---
-def generate_pdf(data, save_path):
-    try:
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", 'B', 16)
-        pdf.cell(0, 10, "Car Inspection Report", ln=True, align="C")
-        pdf.ln(10)
+def generate_pdf(data):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(0, 10, f"{owner_name}/{car_model}", ln=True, align="C")
+    pdf.ln(10)
 
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 8, "Basic Information", ln=True)
+    pdf.set_font("Arial", '', 12)
+    for key in ['Owner Name', 'Car Model', 'Year', 'License Plate']:
+        pdf.cell(0, 8, f"{key}: {data.get(key, 'N/A')}", ln=True)
+
+    for section in [
+        'Engine & Transmission', 'Brakes & Suspension', 'Tires & Wheels',
+        'Lights & Electricals', 'Interior & Exterior', 'Safety & Features', 'Additional Comments'
+    ]:
+        pdf.ln(5)
         pdf.set_font("Arial", 'B', 12)
-        pdf.cell(0, 8, "Basic Information", ln=True)
+        pdf.cell(0, 8, section, ln=True)
         pdf.set_font("Arial", '', 12)
-        for key in ['Owner Name', 'Car Model', 'Year', 'License Plate']:
-            pdf.cell(0, 8, f"{key}: {data.get(key, 'N/A')}", ln=True)
+        for key, value in data.get(section, {}).items():
+            pdf.cell(0, 8, f"{key}: {value if value else 'N/A'}", ln=True)
 
-        for section in [
-            'Engine & Transmission', 'Brakes & Suspension', 'Tires & Wheels',
-            'Lights & Electricals', 'Interior & Exterior', 'Safety & Features', 'Additional Comments'
-        ]:
-            pdf.ln(5)
-            pdf.set_font("Arial", 'B', 12)
-            pdf.cell(0, 8, section, ln=True)
-            pdf.set_font("Arial", '', 12)
-            for key, value in data.get(section, {}).items():
-                pdf.cell(0, 8, f"{key}: {value if value else 'N/A'}", ln=True)
-
-        pdf.output(save_path)
-        return True, None
-    except Exception as e:
-        return False, str(e)
-
-
-# --- SAVE REPORT & PHOTOS ---
-def save_report_and_photos(data, photos):
-    try:
-        desktop = os.path.join(os.path.expanduser("~"), "Desktop")
-        base_folder = os.path.join(desktop, "Inspection Data")
-        os.makedirs(base_folder, exist_ok=True)
-
-        car_folder = os.path.join(base_folder, data['Car Model'] or "Unknown_Car")
-        os.makedirs(car_folder, exist_ok=True)
-
-        owner_folder = os.path.join(car_folder, data['Owner Name'] or "Unknown_Owner")
-        os.makedirs(owner_folder, exist_ok=True)
-
-        pdf_filename = f"{data['Owner Name'] or 'Inspection_Report'}.pdf"
-        pdf_path = os.path.join(owner_folder, pdf_filename)
-
-        ok, err = generate_pdf(data, pdf_path)
-        if not ok:
-            raise Exception(f"PDF generation failed: {err}")
-
-        if photos:
-            for i, photo in enumerate(photos, start=1):
-                photo_ext = os.path.splitext(photo.name)[1]
-                photo_path = os.path.join(owner_folder, f"photo{i}{photo_ext}")
-                try:
-                    with open(photo_path, "wb") as f:
-                        f.write(photo.getbuffer())
-                except Exception as e:
-                    st.warning(f"⚠️ Could not save {photo.name}: {e}")
-        else:
-            st.info("ℹ️ No photos uploaded; skipping photo save.")
-
-        return pdf_path
-    except Exception as e:
-        st.error(f"❌ Error saving report: {e}")
-        st.code(traceback.format_exc())
-        return None
-
+    # Instead of saving locally, return the PDF bytes
+    return pdf.output(dest='S').encode('latin-1')
 
 # --- SUBMIT BUTTON ---
 if st.button("Submit Inspection"):
     try:
-        # Validate inputs
         if not owner_name or not car_model:
             st.warning("⚠️ Please fill in at least Owner Name and Car Model before submitting.")
             st.stop()
 
-        # Data dictionary
         data = {
             'Owner Name': owner_name,
             'Car Model': car_model,
@@ -178,14 +131,16 @@ if st.button("Submit Inspection"):
             }
         }
 
-        pdf_path = save_report_and_photos(data, photos)
+        pdf_bytes = generate_pdf(data)
+        st.success("✅ Inspection report generated successfully!")
+        st.download_button(
+            label="📄 Download Inspection Report PDF",
+            data=pdf_bytes,
+            file_name=f"{owner_name or 'Unknown'}/{car_model or 'Unknown'}.pdf",
+            mime="application/pdf"
+        )
+        st.balloons()
 
-        if pdf_path:
-            st.success(f"✅ Inspection saved successfully at:\n{pdf_path}")
-            st.markdown(f'<a href="file:///{pdf_path}" target="_blank">📄 Open Inspection PDF</a>', unsafe_allow_html=True)
-            st.balloons()
-        else:
-            st.error("❌ Report could not be saved. Check error details above.")
     except Exception as e:
         st.error(f"Unexpected error: {e}")
         st.code(traceback.format_exc())
