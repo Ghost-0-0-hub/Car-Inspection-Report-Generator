@@ -5,30 +5,47 @@ import traceback
 
 # --- PAGE CONFIG ---
 st.set_page_config(
-    page_title="Car Inspection Form",
+    page_title="CAROBAR Inspection Form",
     page_icon="🚘",
     layout="wide"
 )
-st.title("🚘 Car Inspection Form")
+st.title("🚘 CAROBAR Inspection Form")
 
+import streamlit as st
+
+# Define your custom theme colors
+THEME = {
+    "primaryColor": "#2E86C1",
+    "backgroundColor": "#f0f4f8",
+    "secondaryBackgroundColor": "#ffffff",
+    "textColor": "#333333",
+    "font": "sans serif"
+}
+
+# Apply custom CSS
 st.markdown(
-    """
+    f"""
     <style>
-        .stButton>button {
-            background-color: #2E86C1;
-            color: white;
-            font-weight: bold;
-            border-radius: 8px;
-            padding: 0.6em 1.2em;
-        }
-        .stButton>button:hover {
-            background-color: #1B4F72;
-        }
+    /* Primary color for buttons, sliders, etc. */
+    .stButton>button {{
+        background-color: {THEME['primaryColor']};
+        color: {THEME['textColor']};
+        font-weight: bold;
+    }}
+    /* Page background */
+    .reportview-container, .main {{
+        background-color: {THEME['backgroundColor']};
+        color: {THEME['textColor']};
+        font-family: {THEME['font']};
+    }}
+    /* Sidebar background */
+    .css-1d391kg {{
+        background-color: {THEME['secondaryBackgroundColor']};
+    }}
     </style>
     """,
     unsafe_allow_html=True
 )
-
 # --- FORM SECTIONS ---
 with st.expander("Basic Information", expanded=True):
     col1, col2, col3 = st.columns(3)
