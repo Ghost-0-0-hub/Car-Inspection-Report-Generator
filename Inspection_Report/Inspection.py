@@ -159,26 +159,25 @@ if st.button("Submit Inspection"):
         }
 
         # --- NATURAL LANGUAGE INPUT FOR AI ---
+        # --- Make a short natural summary input ---
         inspection_text = f"""
         The vehicle inspected is a {car_year} {car_model} owned by {owner_name}.
-        Engine: {engine_condition}, Transmission: {transmission_condition}, Oil leaks: {oil_leaks}.
-        Brakes: {brakes_condition}, Suspension: {suspension_condition}, Steering: {steering_condition}.
-        Tires: {tire_condition}, Wheels: {wheel_condition}.
+        Engine: {engine_condition}. Transmission: {transmission_condition}. Oil leaks: {oil_leaks}.
+        Brakes: {brakes_condition}. Suspension: {suspension_condition}. Steering: {steering_condition}.
+        Tires: {tire_condition}. Wheels: {wheel_condition}.
         Electrical: Headlights {headlight_condition}, Indicators {indicator_condition}, Battery {battery_condition}.
-        Interior: {interior_condition}, Exterior: {exterior_condition}, Paint: {paint_condition}.
-        Safety: Airbags functional: {airbags}, AC: {ac_condition}, Infotainment: {infotainment}.
-        Comments: {comments if comments else "No comments provided."}
-        """
+        Interior: {interior_condition}. Exterior: {exterior_condition}. Paint: {paint_condition}.
+        Safety: Airbags functional: {airbags}. AC: {ac_condition}. Infotainment: {infotainment}.
+        Comments: {comments if comments else "No additional comments provided."}
+"""
 
-        st.info("🧠 Generating AI summary, please wait...")
-
-        prompt = (
-            "Write a short, professional car inspection summary based on the following details. "
-            "Use complete sentences and mention positives and any minor issues in a balanced tone:\n\n"
-            f"{inspection_text}"
+# --- Give the model a simple summarization input ---
+        model_input = (
+            f"Inspection report for {car_year} {car_model}: {inspection_text}"
         )
 
-        summary = summarizer(prompt, max_length=150, min_length=60, do_sample=False)[0]['summary_text']
+        summary = summarizer(model_input, max_length=120, min_length=50, do_sample=False)[0]['summary_text']
+
 
         # --- GENERATE PDF ---
         pdf_bytes = generate_pdf(data, summary)
@@ -199,3 +198,4 @@ if st.button("Submit Inspection"):
     except Exception as e:
         st.error(f"Unexpected error: {e}")
         st.code(traceback.format_exc())
+
