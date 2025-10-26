@@ -11,41 +11,65 @@ st.set_page_config(
 )
 st.title("🚘 CAROBAR Inspection Form")
 
-import streamlit as st
-
-# Define your custom theme colors
+# --- LIGHT THEME COLORS ---
 THEME = {
     "primaryColor": "#2E86C1",
     "backgroundColor": "#f0f4f8",
     "secondaryBackgroundColor": "#ffffff",
     "textColor": "#333333",
-    "font": "sans serif"
+    "font": "sans serif",
+    "inputBackground": "#ffffff",
+    "inputText": "#333333",
+    "expanderHeader": "#e0e0e0"
 }
 
-# Apply custom CSS
-st.markdown(
-    f"""
-    <style>
-    /* Primary color for buttons, sliders, etc. */
-    .stButton>button {{
-        background-color: {THEME['primaryColor']};
-        color: {THEME['textColor']};
-        font-weight: bold;
-    }}
-    /* Page background */
-    .reportview-container, .main {{
-        background-color: {THEME['backgroundColor']};
-        color: {THEME['textColor']};
-        font-family: {THEME['font']};
-    }}
-    /* Sidebar background */
-    .css-1d391kg {{
-        background-color: {THEME['secondaryBackgroundColor']};
-    }}
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# --- APPLY LIGHT THEME VIA CSS ---
+st.markdown(f"""
+<style>
+/* Main page and text */
+.reportview-container, .main {{
+    background-color: {THEME['backgroundColor']};
+    color: {THEME['textColor']};
+    font-family: {THEME['font']};
+}}
+
+/* Sidebar background */
+.css-1d391kg {{
+    background-color: {THEME['secondaryBackgroundColor']};
+    color: {THEME['textColor']};
+}}
+
+/* Buttons */
+.stButton>button {{
+    background-color: {THEME['primaryColor']};
+    color: white;
+    font-weight: bold;
+}}
+
+/* Expander header */
+.stExpanderHeader {{
+    background-color: {THEME['expanderHeader']};
+    color: {THEME['textColor']};
+    font-weight: bold;
+}}
+
+/* Inputs, text areas, and selectboxes */
+.stTextInput>div>div>input,
+.stTextArea>div>textarea,
+.stSelectbox>div>div>div>div,
+.stNumberInput>div>div>input {{
+    background-color: {THEME['inputBackground']};
+    color: {THEME['inputText']};
+}}
+
+/* Radio buttons and checkboxes labels */
+.stRadio>div>div>label,
+.stCheckbox>div>label {{
+    color: {THEME['textColor']};
+}}
+</style>
+""", unsafe_allow_html=True)
+
 # --- FORM SECTIONS ---
 with st.expander("Basic Information", expanded=True):
     col1, col2, col3 = st.columns(3)
@@ -113,7 +137,6 @@ with st.expander("Additional Comments / Photos"):
     comments = st.text_area("Comments", height=120, placeholder="Add additional inspection notes here...")
     photos = st.file_uploader("Upload Car Photos", accept_multiple_files=True, type=["png", "jpg", "jpeg"])
 
-
 # --- PDF GENERATION FUNCTION ---
 def generate_pdf(data):
     pdf = FPDF()
@@ -144,7 +167,6 @@ def generate_pdf(data):
 
     pdf_output = io.BytesIO(pdf.output(dest="S").encode("latin-1"))
     return pdf_output
-
 
 # --- SUBMIT BUTTON ---
 if st.button("Submit Inspection"):
