@@ -13,45 +13,65 @@ st.title("🚘 Car Inspection Form")
 # --- FORM SECTIONS ---
 with st.expander("Basic Information", expanded=True):
     col1, col2, col3 = st.columns(3)
-    with col1: owner_name = st.text_input("Owner Name").strip()
-    with col2: car_model = st.text_input("Car Model").strip()
-    with col3: car_year = st.number_input("Year", min_value=1980, max_value=2030, step=1)
+    with col1:
+        owner_name = st.text_input("Owner Name").strip()
+    with col2:
+        car_model = st.text_input("Car Model").strip()
+    with col3:
+        car_year = st.number_input("Year", min_value=1980, max_value=2030, step=1)
     license_plate = st.text_input("License Plate").strip()
 
 with st.expander("Engine & Transmission"):
     col1, col2, col3 = st.columns(3)
-    with col1: engine_condition = st.selectbox("Engine Condition", ["Excellent", "Good", "Average", "Poor"])
-    with col2: transmission_condition = st.selectbox("Transmission Condition", ["Excellent", "Good", "Average", "Poor"])
-    with col3: oil_leaks = st.radio("Oil Leaks?", ["Yes", "No"])
+    with col1:
+        engine_condition = st.selectbox("Engine Condition", ["Excellent", "Good", "Average", "Poor"])
+    with col2:
+        transmission_condition = st.selectbox("Transmission Condition", ["Excellent", "Good", "Average", "Poor"])
+    with col3:
+        oil_leaks = st.radio("Oil Leaks?", ["Yes", "No"])
 
 with st.expander("Brakes & Suspension"):
     col1, col2, col3 = st.columns(3)
-    with col1: brakes_condition = st.selectbox("Brakes Condition", ["Excellent", "Good", "Average", "Poor"])
-    with col2: suspension_condition = st.selectbox("Suspension Condition", ["Excellent", "Good", "Average", "Poor"])
-    with col3: steering_condition = st.selectbox("Steering Condition", ["Excellent", "Good", "Average", "Poor"])
+    with col1:
+        brakes_condition = st.selectbox("Brakes Condition", ["Excellent", "Good", "Average", "Poor"])
+    with col2:
+        suspension_condition = st.selectbox("Suspension Condition", ["Excellent", "Good", "Average", "Poor"])
+    with col3:
+        steering_condition = st.selectbox("Steering Condition", ["Excellent", "Good", "Average", "Poor"])
 
 with st.expander("Tires & Wheels"):
     col1, col2 = st.columns(2)
-    with col1: tire_condition = st.selectbox("Tire Condition", ["Excellent", "Good", "Average", "Poor"])
-    with col2: wheel_condition = st.selectbox("Wheel Condition", ["Excellent", "Good", "Average", "Poor"])
+    with col1:
+        tire_condition = st.selectbox("Tire Condition", ["Excellent", "Good", "Average", "Poor"])
+    with col2:
+        wheel_condition = st.selectbox("Wheel Condition", ["Excellent", "Good", "Average", "Poor"])
 
 with st.expander("Lights & Electricals"):
     col1, col2, col3 = st.columns(3)
-    with col1: headlight_condition = st.selectbox("Headlights", ["Working", "Not Working"])
-    with col2: indicator_condition = st.selectbox("Indicators", ["Working", "Not Working"])
-    with col3: battery_condition = st.selectbox("Battery Condition", ["Excellent", "Good", "Average", "Poor"])
+    with col1:
+        headlight_condition = st.selectbox("Headlights", ["Working", "Not Working"])
+    with col2:
+        indicator_condition = st.selectbox("Indicators", ["Working", "Not Working"])
+    with col3:
+        battery_condition = st.selectbox("Battery Condition", ["Excellent", "Good", "Average", "Poor"])
 
 with st.expander("Interior & Exterior"):
     col1, col2, col3 = st.columns(3)
-    with col1: interior_condition = st.selectbox("Interior Condition", ["Excellent", "Good", "Average", "Poor"])
-    with col2: exterior_condition = st.selectbox("Exterior Condition", ["Excellent", "Good", "Average", "Poor"])
-    with col3: paint_condition = st.selectbox("Paint Condition", ["Excellent", "Good", "Average", "Poor"])
+    with col1:
+        interior_condition = st.selectbox("Interior Condition", ["Excellent", "Good", "Average", "Poor"])
+    with col2:
+        exterior_condition = st.selectbox("Exterior Condition", ["Excellent", "Good", "Average", "Poor"])
+    with col3:
+        paint_condition = st.selectbox("Paint Condition", ["Excellent", "Good", "Average", "Poor"])
 
 with st.expander("Safety & Features"):
     col1, col2, col3 = st.columns(3)
-    with col1: airbags = st.radio("Airbags Functional?", ["Yes", "No"])
-    with col2: ac_condition = st.selectbox("AC Condition", ["Excellent", "Good", "Average", "Poor"])
-    with col3: infotainment = st.selectbox("Infotainment System", ["Excellent", "Good", "Average", "Poor"])
+    with col1:
+        airbags = st.radio("Airbags Functional?", ["Yes", "No"])
+    with col2:
+        ac_condition = st.selectbox("AC Condition", ["Excellent", "Good", "Average", "Poor"])
+    with col3:
+        infotainment = st.selectbox("Infotainment System", ["Excellent", "Good", "Average", "Poor"])
 
 with st.expander("Additional Comments / Photos"):
     comments = st.text_area("Comments")
@@ -62,7 +82,7 @@ def generate_pdf(data):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, f"{owner_name}/{car_model}", ln=True, align="C")
+    pdf.cell(0, 10, "Car Inspection Report", ln=True, align="C")
     pdf.ln(10)
 
     pdf.set_font("Arial", 'B', 12)
@@ -82,7 +102,7 @@ def generate_pdf(data):
         for key, value in data.get(section, {}).items():
             pdf.cell(0, 8, f"{key}: {value if value else 'N/A'}", ln=True)
 
-    # Instead of saving locally, return the PDF bytes
+    # Return PDF as bytes (for download)
     return pdf.output(dest='S').encode('latin-1')
 
 # --- SUBMIT BUTTON ---
@@ -132,11 +152,17 @@ if st.button("Submit Inspection"):
         }
 
         pdf_bytes = generate_pdf(data)
+
+        # ✅ Safe filename (no slashes, works on all devices)
+        safe_owner = owner_name.replace("/", "_") or "Unknown"
+        safe_model = car_model.replace("/", "_") or "Unknown"
+        filename = f"{safe_owner}_{safe_model}.pdf"
+
         st.success("✅ Inspection report generated successfully!")
         st.download_button(
             label="📄 Download Inspection Report PDF",
             data=pdf_bytes,
-            file_name=f"{owner_name or 'Unknown'}/{car_model or 'Unknown'}.pdf",
+            file_name=filename,
             mime="application/pdf"
         )
         st.balloons()
