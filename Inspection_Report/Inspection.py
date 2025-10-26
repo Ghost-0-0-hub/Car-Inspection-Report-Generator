@@ -1,5 +1,6 @@
 import streamlit as st
 from fpdf import FPDF
+import io
 import traceback
 
 # --- PAGE CONFIG ---
@@ -9,6 +10,24 @@ st.set_page_config(
     layout="wide"
 )
 st.title("🚘 Car Inspection Form")
+
+st.markdown(
+    """
+    <style>
+        .stButton>button {
+            background-color: #2E86C1;
+            color: white;
+            font-weight: bold;
+            border-radius: 8px;
+            padding: 0.6em 1.2em;
+        }
+        .stButton>button:hover {
+            background-color: #1B4F72;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # --- FORM SECTIONS ---
 with st.expander("Basic Information", expanded=True):
@@ -74,36 +93,41 @@ with st.expander("Safety & Features"):
         infotainment = st.selectbox("Infotainment System", ["Excellent", "Good", "Average", "Poor"])
 
 with st.expander("Additional Comments / Photos"):
-    comments = st.text_area("Comments")
+    comments = st.text_area("Comments", height=120, placeholder="Add additional inspection notes here...")
     photos = st.file_uploader("Upload Car Photos", accept_multiple_files=True, type=["png", "jpg", "jpeg"])
+
 
 # --- PDF GENERATION FUNCTION ---
 def generate_pdf(data):
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.set_font("Arial", "B", 16)
     pdf.cell(0, 10, "Car Inspection Report", ln=True, align="C")
     pdf.ln(10)
 
-    pdf.set_font("Arial", 'B', 12)
+    # Basic Info
+    pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 8, "Basic Information", ln=True)
-    pdf.set_font("Arial", '', 12)
-    for key in ['Owner Name', 'Car Model', 'Year', 'License Plate']:
-        pdf.cell(0, 8, f"{key}: {data.get(key, 'N/A')}", ln=True)
+    pdf.set_font("Arial", "", 12)
+    for key in ["Owner Name", "Car Model", "Year", "License Plate"]:
+        value = str(data.get(key, "N/A"))
+        pdf.cell(0, 8, f"{key}: {value}", ln=True)
 
-    for section in [
-        'Engine & Transmission', 'Brakes & Suspension', 'Tires & Wheels',
-        'Lights & Electricals', 'Interior & Exterior', 'Safety & Features', 'Additional Comments'
-    ]:
+    # Other Sections
+    for section, content in data.items():
+        if section in ["Owner Name", "Car Model", "Year", "License Plate"]:
+            continue
         pdf.ln(5)
-        pdf.set_font("Arial", 'B', 12)
+        pdf.set_font("Arial", "B", 12)
         pdf.cell(0, 8, section, ln=True)
-        pdf.set_font("Arial", '', 12)
-        for key, value in data.get(section, {}).items():
+        pdf.set_font("Arial", "", 12)
+        for key, value in content.items():
             pdf.cell(0, 8, f"{key}: {value if value else 'N/A'}", ln=True)
 
-    # Return PDF as bytes (for download)
-    return pdf.output(dest='S').encode('latin-1')
+    pdf_output = io.BytesIO(pdf.output(dest="S").encode("latin-1"))
+    return pdf_output
+
 
 # --- SUBMIT BUTTON ---
 if st.button("Submit Inspection"):
@@ -113,60 +137,57 @@ if st.button("Submit Inspection"):
             st.stop()
 
         data = {
-            'Owner Name': owner_name,
-            'Car Model': car_model,
-            'Year': car_year,
-            'License Plate': license_plate,
-            'Engine & Transmission': {
-                'Engine Condition': engine_condition,
-                'Transmission Condition': transmission_condition,
-                'Oil Leaks': oil_leaks
+            "Owner Name": owner_name,
+            "Car Model": car_model,
+            "Year": car_year,
+            "License Plate": license_plate,
+            "Engine & Transmission": {
+                "Engine Condition": engine_condition,
+                "Transmission Condition": transmission_condition,
+                "Oil Leaks": oil_leaks,
             },
-            'Brakes & Suspension': {
-                'Brakes Condition': brakes_condition,
-                'Suspension Condition': suspension_condition,
-                'Steering Condition': steering_condition
+            "Brakes & Suspension": {
+                "Brakes Condition": brakes_condition,
+                "Suspension Condition": suspension_condition,
+                "Steering Condition": steering_condition,
             },
-            'Tires & Wheels': {
-                'Tire Condition': tire_condition,
-                'Wheel Condition': wheel_condition
+            "Tires & Wheels": {
+                "Tire Condition": tire_condition,
+                "Wheel Condition": wheel_condition,
             },
-            'Lights & Electricals': {
-                'Headlights': headlight_condition,
-                'Indicators': indicator_condition,
-                'Battery Condition': battery_condition
+            "Lights & Electricals": {
+                "Headlights": headlight_condition,
+                "Indicators": indicator_condition,
+                "Battery Condition": battery_condition,
             },
-            'Interior & Exterior': {
-                'Interior Condition': interior_condition,
-                'Exterior Condition': exterior_condition,
-                'Paint Condition': paint_condition
+            "Interior & Exterior": {
+                "Interior Condition": interior_condition,
+                "Exterior Condition": exterior_condition,
+                "Paint Condition": paint_condition,
             },
-            'Safety & Features': {
-                'Airbags Functional': airbags,
-                'AC Condition': ac_condition,
-                'Infotainment System': infotainment
+            "Safety & Features": {
+                "Airbags Functional": airbags,
+                "AC Condition": ac_condition,
+                "Infotainment System": infotainment,
             },
-            'Additional Comments': {
-                'Comments': comments
-            }
+            "Additional Comments": {"Comments": comments},
         }
 
         pdf_bytes = generate_pdf(data)
 
-        # ✅ Safe filename (no slashes, works on all devices)
         safe_owner = owner_name.replace("/", "_") or "Unknown"
         safe_model = car_model.replace("/", "_") or "Unknown"
-        filename = f"{safe_owner}_{safe_model}.pdf"
+        filename = f"{safe_owner}_{safe_model}_Inspection.pdf"
 
         st.success("✅ Inspection report generated successfully!")
         st.download_button(
             label="📄 Download Inspection Report PDF",
             data=pdf_bytes,
             file_name=filename,
-            mime="application/pdf"
+            mime="application/pdf",
         )
         st.balloons()
 
     except Exception as e:
-        st.error(f"Unexpected error: {e}")
+        st.error(f"❌ Unexpected error: {e}")
         st.code(traceback.format_exc())
